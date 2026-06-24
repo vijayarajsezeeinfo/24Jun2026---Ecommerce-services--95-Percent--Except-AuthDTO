@@ -2,6 +2,8 @@ package com.ezeeinfo.controller;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,6 +30,8 @@ public class UserController {
 	@Autowired
 	NamespaceController namespaceController;
 
+	private static final Logger LOG = LoggerFactory.getLogger(UserController.class);
+
 	@RequestMapping(value = "/{namespaceCode}", method = RequestMethod.GET)
 	public List<UserIOResponse> getAllUsers(@PathVariable("namespaceCode") String namespaceCode) {
 		return userService.getAllUsers(namespaceCode).stream().map(dto -> userDTOToIO(dto)).toList();
@@ -40,6 +44,7 @@ public class UserController {
 
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
 	public UserIOResponse update(@RequestBody UserIO userIO) {
+		LOG.info("Input USER : {}",userIO);
 		UserDTO userDTO = userService.update(userIOToDTO(userIO));
 		return userDTOToIO(userDTO);
 	}

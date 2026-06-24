@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.ezeeinfo.dao.ProductDAO;
 import com.ezeeinfo.dao.UserDAO;
 import com.ezeeinfo.dto.ProductDTO;
+import com.ezeeinfo.dto.UserDTO;
 import com.ezeeinfo.exception.ServiceException;
 import com.ezeeinfo.service.ProductService;
 import com.ezeeinfo.util.SecurityUtil;
@@ -38,13 +39,25 @@ public class ProductServiceImpl implements ProductService {
 	@Override
 	public ProductDTO update(ProductDTO productDTO) {
 
-		// TODO Auto-generated method stub
+		UserDTO loggedInUser = userDAO.getUser(SecurityUtil.getUserId());
+		productDTO.setUpdatedBy(loggedInUser);
 		LOG.info("product dto: {}", productDTO);
-		productDTO.setUpdatedBy(userDAO.getUser(SecurityUtil.getUserId()));
-		if (!productDTO.getNamespace().getCode().equals(userDAO.getUser(SecurityUtil.getUserId()).getNamespace().getCode())) {
-			throw new ServiceException("Product's namespace and Users namespace does not macth");
+
+		if (!productDTO.getNamespace().getCode().equals(loggedInUser.getNamespace().getCode())) {
+			throw new ServiceException("EXCEPTION 403: ONLY SAME NAMESPACE USER CAN SAVE/MODIFY PRODUCT");
+		}
+
+		if (loggedInUser.getRole().getId() != 1) {
+			throw new ServiceException("EXCEPTION 403: ONLY ADMIN CAN SAVE/MODIFY PRODUCT");
 		}
 		return productDAO.update(productDTO);
+	}
+
+	@Override
+	public List<ProductDTO> getProductsByNamePriceAndNamespace(String name, Double price, String namespaceCode) {
+		// TODO Auto-generated method stub
+		LOG.info("Getting products by NAME, PRICE and NAMESPACE");
+		return productDAO.getProductsByNamePriceAndNamespace(name, price, namespaceCode);
 	}
 
 }

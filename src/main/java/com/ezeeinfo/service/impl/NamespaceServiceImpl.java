@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import com.ezeeinfo.dao.NamespaceDAO;
 import com.ezeeinfo.dao.UserDAO;
 import com.ezeeinfo.dto.NamespaceDTO;
+import com.ezeeinfo.dto.UserDTO;
+import com.ezeeinfo.exception.ServiceException;
 import com.ezeeinfo.service.NamespaceService;
 import com.ezeeinfo.util.SecurityUtil;
 
@@ -66,7 +68,14 @@ public class NamespaceServiceImpl implements NamespaceService {
 
 	@Override
 	public NamespaceDTO update(NamespaceDTO namespaceDTO) {
-		namespaceDTO.setUpdatedBy(userDAO.getUser(SecurityUtil.getUserId()));
+
+		UserDTO loggedInUser = userDAO.getUser(SecurityUtil.getUserId());
+		namespaceDTO.setUpdatedBy(loggedInUser);
+
+		if (loggedInUser.getRole().getId() != 0) {
+			throw new ServiceException("EXCEPTION 403: ONLY SUPER ADMIN HAS ACCESS TO SAVE OR MODIFY NAMESPACES");
+		}
+
 		NamespaceDTO updatedNamespace = namespaceDAO.update(namespaceDTO);
 		if (updatedNamespace != null) {
 			redisTemplate.opsForValue().set(updatedNamespace.getCode(), updatedNamespace);

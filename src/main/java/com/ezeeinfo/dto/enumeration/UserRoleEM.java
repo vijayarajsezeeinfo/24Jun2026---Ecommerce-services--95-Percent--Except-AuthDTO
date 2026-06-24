@@ -31,20 +31,22 @@ public enum UserRoleEM {
 	@JsonCreator
 	public static UserRoleEM getUserRoleEM(int id) {
 		UserRoleEM[] values = values();
+		UserRoleEM roleEM = null;
 		for (UserRoleEM role : values) {
 			if (role.id == id) {
-				return role;
+				roleEM = role;
 			}
 		}
-		return null;
+		return roleEM;
 	}
 
 	public static UserRoleEM getUserRoleEM(String code) {
+		UserRoleEM roleEM = null;
 		for (UserRoleEM role : values()) {
 			if (role.getCode().equalsIgnoreCase(code)) {
-				return role;
+				roleEM = role;
 			}
 		}
-		return null;
+		return roleEM;
 	}
 }

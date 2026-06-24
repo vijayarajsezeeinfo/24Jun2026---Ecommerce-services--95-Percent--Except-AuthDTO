@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import com.ezeeinfo.dao.ProductInventoryDAO;
 import com.ezeeinfo.dao.UserDAO;
 import com.ezeeinfo.dto.ProductInventoryDTO;
+import com.ezeeinfo.dto.UserDTO;
+import com.ezeeinfo.exception.ServiceException;
 import com.ezeeinfo.service.ProductInventoryService;
 import com.ezeeinfo.util.SecurityUtil;
 
@@ -32,8 +34,17 @@ public class ProductInventoryServiceImpl implements ProductInventoryService {
 
 	@Override
 	public ProductInventoryDTO update(ProductInventoryDTO productInventoryDTO) {
-		// TODO Auto-generated method stub
-		productInventoryDTO.setUpdatedBy(userDAO.getUser(SecurityUtil.getUserId()));
+
+		UserDTO loggedInUser = userDAO.getUser(SecurityUtil.getUserId());
+		productInventoryDTO.setUpdatedBy(loggedInUser);
+
+		if (!productInventoryDTO.getNamespace().getCode().equals(loggedInUser.getNamespace().getCode())) {
+			throw new ServiceException("EXCEPTION 403: ONLY SAME NAMESPACE USER CAN SAVE/MODIFY PRODUCT INVENTORY");
+		}
+
+		if (loggedInUser.getRole().getId() != 1) {
+			throw new ServiceException("EXCEPTION 403: ONLY ADMIN CAN SAVE/MODIFY PRODUCT INVENTORY");
+		}
 		return productInventoryDAO.update(productInventoryDTO);
 	}
 

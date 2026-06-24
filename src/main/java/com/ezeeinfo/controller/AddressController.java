@@ -37,26 +37,27 @@ public class AddressController {
 
 	@RequestMapping(value = "/{namespaceCode}", method = RequestMethod.GET)
 	public List<AddressIO> getAllAddresses(@PathVariable("namespaceCode") String namespaceCode) {
-		LOG.info("{}", addressService.getAllAddresses(namespaceCode).stream().map(dto -> addressDTOToIO(dto)).toList());
-		return addressService.getAllAddresses(namespaceCode).stream().map(dto -> addressDTOToIO(dto)).toList();
+		List<AddressIO> allAddresses = addressService.getAllAddresses(namespaceCode).stream().map(dto -> addressDTOToIO(dto)).toList();
+		LOG.info("Getting all addresses in Namespace {} : {}", namespaceCode, allAddresses);
+		return allAddresses;
 	}
 
 	@RequestMapping(value = "/code/{code}", method = RequestMethod.GET)
 	public AddressIO getAddressByCode(@PathVariable("code") String code) {
-		LOG.info("{}", addressDTOToIO(addressService.getAddressByCode(code)));
-		return addressDTOToIO(addressService.getAddressByCode(code));
+		AddressIO address = addressDTOToIO(addressService.getAddressByCode(code));
+		LOG.info("Getting address for Code {} : {}", code, address);
+		return address;
 	}
 
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
 	public AddressIO update(@RequestBody AddressIO addressIO) {
-		LOG.info("entered AddressController.update");
-		LOG.info("Updated by : {}", addressIO);
+		LOG.info("Input Address for Save or Update : {}", addressIO);
 		AddressDTO addressDTO = addressService.update(addressIOToDTO(addressIO));
 		return addressDTOToIO(addressDTO);
 	}
 
 	public AddressIO addressDTOToIO(AddressDTO addressDTO) {
-		LOG.info("{}", addressDTO);
+		LOG.info("Input for Address DTO to IO : {}", addressDTO);
 		UserIOResponse userIO = userController.userDTOToIO(addressDTO.getUser());
 		NamespaceIO namespaceIO = namespaceController.namespaceDTOToIO(addressDTO.getNamespace());
 		AddressIO addressIO = new AddressIO();
@@ -71,12 +72,12 @@ public class AddressController {
 		addressIO.setUser(userIO);
 		addressIO.setNamespace(namespaceIO);
 		addressIO.setActiveFlag(addressDTO.getActiveFlag());
-		LOG.info("{}", addressIO);
+		LOG.info("output for Address DTO to IO : {}", addressIO);
 		return addressIO;
 	}
 
 	public AddressDTO addressIOToDTO(AddressIO addressIO) {
-		LOG.info("{}", addressIO);
+		LOG.info("Input for Address IO to DTO: {}", addressIO);
 		UserDTO userDTO = userDAO.getUserByCode(addressIO.getUser().getCode());
 		NamespaceDTO namespaceDTO = namespaceController.namespaceIOToDTO(addressIO.getNamespace());
 		AddressDTO addressDTO = new AddressDTO();
@@ -91,7 +92,7 @@ public class AddressController {
 		addressDTO.setUser(userDTO);
 		addressDTO.setNamespace(namespaceDTO);
 		addressDTO.setActiveFlag(addressIO.getActiveFlag());
-		LOG.info("{}", addressDTO);
+		LOG.info("Output for Address IO to DTO: {}", addressDTO);
 		return addressDTO;
 	}
 }

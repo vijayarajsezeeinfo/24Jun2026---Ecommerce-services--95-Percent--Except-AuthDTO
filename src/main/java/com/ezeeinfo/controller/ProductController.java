@@ -2,11 +2,15 @@ package com.ezeeinfo.controller;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ezeeinfo.controller.io.BrandIO;
@@ -19,11 +23,8 @@ import com.ezeeinfo.dto.NamespaceDTO;
 import com.ezeeinfo.dto.ProductDTO;
 import com.ezeeinfo.service.ProductService;
 
-import lombok.extern.slf4j.Slf4j;
-
 @RestController
 @RequestMapping("/product")
-@Slf4j
 public class ProductController {
 
 	@Autowired
@@ -34,6 +35,8 @@ public class ProductController {
 	CategoryController categoryController;
 	@Autowired
 	BrandController brandController;
+
+	private static final Logger LOG = LoggerFactory.getLogger(ProductController.class);
 
 	@RequestMapping(value = "/{namespaceCode}", method = RequestMethod.GET)
 	public List<ProductIO> getAllProducts(@PathVariable("namespaceCode") String namespaceCode) {
@@ -47,8 +50,16 @@ public class ProductController {
 
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
 	public ProductIO update(@RequestBody ProductIO productIO) {
-		log.info("product io: {}", productIO);
+		LOG.info("Input Product for Save or Update : {}", productIO);
 		return productDTOToIO(productService.update(productIOToDTO(productIO)));
+	}
+
+	@GetMapping("/filter")
+	public List<ProductIO> getProductsByNamePriceAndNamespace(@RequestParam String name, @RequestParam Double price, @RequestParam String namespaceCode) {
+		LOG.info("Getting products by NAME, PRICE and NAMESPACE");
+		List<ProductDTO> productDTOs = productService.getProductsByNamePriceAndNamespace(name, price, namespaceCode);
+		List<ProductIO> productIOs = productDTOs.stream().map(dto -> productDTOToIO(dto)).toList();
+		return productIOs;
 	}
 
 	public ProductIO productDTOToIO(ProductDTO productDTO) {

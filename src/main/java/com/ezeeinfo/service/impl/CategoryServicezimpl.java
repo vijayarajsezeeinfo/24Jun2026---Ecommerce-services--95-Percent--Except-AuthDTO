@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import com.ezeeinfo.dao.CategoryDAO;
 import com.ezeeinfo.dao.UserDAO;
 import com.ezeeinfo.dto.CategoryDTO;
+import com.ezeeinfo.dto.UserDTO;
+import com.ezeeinfo.exception.ServiceException;
 import com.ezeeinfo.service.CategoryService;
 import com.ezeeinfo.util.SecurityUtil;
 
@@ -33,8 +35,17 @@ public class CategoryServicezimpl implements CategoryService {
 
 	@Override
 	public CategoryDTO update(CategoryDTO categoryDTO) {
-		// TODO Auto-generated method stub
-		categoryDTO.setUpdatedBy(userDAO.getUser(SecurityUtil.getUserId()));
+		UserDTO loggedInUser = userDAO.getUser(SecurityUtil.getUserId());
+		categoryDTO.setUpdatedBy(loggedInUser);
+
+		if (!loggedInUser.getNamespace().getCode().equalsIgnoreCase(categoryDTO.getNamespace().getCode())) {
+			throw new ServiceException("EXCEPTION 403: ONLY SAME NAMESPACE USER CAN SAVE/MODIFY CATEGORY");
+		}
+
+		if (loggedInUser.getRole().getId() != 1) {
+			throw new ServiceException("EXCEPTION 403: ONLY ADMIN CAN SAVE/MODIFY CATEGORY");
+		}
+
 		return categoryDAO.update(categoryDTO);
 	}
 

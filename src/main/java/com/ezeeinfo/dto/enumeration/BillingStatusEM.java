@@ -27,21 +27,23 @@ public enum BillingStatusEM {
 	}
 
 	public static BillingStatusEM getBillingStatusEM(int id) {
+		BillingStatusEM billingStatusEM = null;
 		for (BillingStatusEM billingStatus : values()) {
 			if (billingStatus.getId() == id) {
-				return billingStatus;
+				billingStatusEM = billingStatus;
 			}
 		}
-		return null;
+		return billingStatusEM;
 	}
 
 	public static BillingStatusEM getBillingStatusEM(String code) {
+		BillingStatusEM billingStatusEM = null;
 		for (BillingStatusEM billingStatus : values()) {
 			if (billingStatus.getCode().equalsIgnoreCase(code)) {
-				return billingStatus;
+				billingStatusEM = billingStatus;
 			}
 		}
-		return null;
+		return billingStatusEM;
 	}
 
 }

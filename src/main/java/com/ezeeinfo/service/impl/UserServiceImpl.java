@@ -68,15 +68,46 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public UserDTO update(UserDTO userDTO) {
+
+		// HASHING PASSWORD
 		userDTO.setPassword(PasswordUtil.hashPassword(userDTO.getPassword()));
-		userDTO.setUpdatedBy(userDAO.getUser(SecurityUtil.getUserId()));
-		if (!userDTO.getNamespace().getCode().equals(userDAO.getUser(SecurityUtil.getUserId()).getNamespace().getCode())) {
-			throw new ServiceException("Invalid Namespace. Enter valid Namespace");
+
+		// SETTING LOGGED IN USER
+		UserDTO loggedInUser = userDAO.getUser(SecurityUtil.getUserId());
+		userDTO.setUpdatedBy(loggedInUser);
+
+		LOG.info("Input USER in USER SERVICE IMPL after Setting updated by : {}", userDTO);
+
+		if (!userDTO.getCode().equalsIgnoreCase("null")) {
+			UserDTO dbUser = userDAO.getUserByCode(userDTO.getCode());
+
+			// NOBODY CAN CHANGE NAMESPACE FOR EXISTING USER
+			if (!dbUser.getNamespace().getCode().equalsIgnoreCase(userDTO.getNamespace().getCode())) {
+				throw new ServiceException("EXCEPTION 400: CANNOT CHANGE NAMESPACE FOR EXISTING USER");
+			}
+
+			// ONLY ADMIN CAN CHANGE THE USER ROLE
+			if (userDTO.getRole().getId() != userDAO.getUserByCode(userDTO.getCode()).getRole().getId()) {
+				if (userDTO.getUpdatedBy().getRole().getId() != 1) {
+					throw new ServiceException("EXCEPTION 403: ONLY ADMIN CAN CHANGE THE ROLE");
+				}
+			}
 		}
+
+		// OTHER NAMESPACE USER CANNOT MAKE CHANGE
+		if (!userDTO.getNamespace().getCode().equals(loggedInUser.getNamespace().getCode())) {
+			throw new ServiceException("EXCEPTION 403: ONLY SAME NAMESPACE USER CAN MAKE CHANGES");
+		}
+
+		// UPDATING
 		UserDTO updatedUser = userDAO.update(userDTO);
 		if (updatedUser != null) {
+
+			// STORING IN userCache
 			Cache<String, UserDTO> userCache = cacheManager.getCache("userCache", String.class, UserDTO.class);
 			userCache.put(updatedUser.getCode(), updatedUser);
+
+			// REMOVING userListCache AFTER UPDATING USER
 			Cache<String, List> userListCache = cacheManager.getCache("userListCache", String.class, List.class);
 			userListCache.remove(updatedUser.getNamespace().getCode());
 			LOG.info("User cache updated and user list cache cleared");

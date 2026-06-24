@@ -483,7 +483,7 @@ public class OrderDAO {
 						orderMap.put(orderId, dto);
 					}
 
-					// Only add item if it exists
+					// Only adding item if it exists
 					if (rs.getObject("order_item_id") != null) {
 						
 						UserDTO brdUpdatedBy = userDAO.getUser(rs.getInt("brand_updated_by"));

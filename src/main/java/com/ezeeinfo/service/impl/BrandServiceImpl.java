@@ -2,14 +2,14 @@ package com.ezeeinfo.service.impl;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ezeeinfo.dao.BrandDAO;
 import com.ezeeinfo.dao.UserDAO;
 import com.ezeeinfo.dto.BrandDTO;
+import com.ezeeinfo.dto.UserDTO;
+import com.ezeeinfo.exception.ServiceException;
 import com.ezeeinfo.service.BrandService;
 import com.ezeeinfo.util.SecurityUtil;
 
@@ -19,8 +19,6 @@ public class BrandServiceImpl implements BrandService {
 	BrandDAO brandDAO;
 	@Autowired
 	UserDAO userDAO;
-	
-	private static final Logger LOG = LoggerFactory.getLogger(BrandServiceImpl.class);
 
 	@Override
 	public List<BrandDTO> getAllBrands(String namespaceCode) {
@@ -36,8 +34,16 @@ public class BrandServiceImpl implements BrandService {
 
 	@Override
 	public BrandDTO update(BrandDTO brandDTO) {
-		// TODO Auto-generated method stub
-		brandDTO.setUpdatedBy(userDAO.getUser(SecurityUtil.getUserId()));
+		UserDTO loggedInUser = userDAO.getUser(SecurityUtil.getUserId());
+		brandDTO.setUpdatedBy(loggedInUser);
+
+		if (!loggedInUser.getNamespace().getCode().equalsIgnoreCase(brandDTO.getNamespace().getCode())) {
+			throw new ServiceException("EXCEPTION 403: ONLY SAME NAMESPACE USER CAN SAVE/MODIFY BRAND");
+		}
+
+		if (loggedInUser.getRole().getId() != 1) {
+			throw new ServiceException("EXCEPTION 403: ONLY ADMIN CAN SAVE/MODIFY BRAND");
+		}
 		return brandDAO.update(brandDTO);
 	}
 

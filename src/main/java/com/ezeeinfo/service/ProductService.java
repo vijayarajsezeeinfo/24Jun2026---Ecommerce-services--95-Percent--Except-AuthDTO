@@ -11,4 +11,6 @@ public interface ProductService {
 	ProductDTO getProductByCode(String code);
 
 	ProductDTO update(ProductDTO productDTO);
+
+	List<ProductDTO> getProductsByNamePriceAndNamespace(String name, Double price, String namespaceCode);
 }

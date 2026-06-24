@@ -42,11 +42,10 @@ public class CartItemController {
 		return cartItemService.getAllCartItems(namespaceCode).stream().map(dto -> cartItemDTOToIO(dto)).toList();
 	}
 
-	//
-	// @RequestMapping(value = "/code/{code}", method = RequestMethod.GET)
-	// public CartItemIO getCartItemByCode(@PathVariable String code) {
-	// return cartItemDTOToIO(cartItemService.getCartItemByCode(code));
-	// }
+	@RequestMapping(value = "/code/{code}", method = RequestMethod.GET)
+	public CartItemIO getCartItemByCode(@PathVariable String code) {
+		return cartItemDTOToIO(cartItemService.getCartItemByCode(code));
+	}
 
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
 	public CartItemIO update(@RequestBody CartItemIO io) {

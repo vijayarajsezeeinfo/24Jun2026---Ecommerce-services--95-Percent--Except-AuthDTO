@@ -7,26 +7,28 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import lombok.extern.slf4j.Slf4j;
-
 @Component
-@Slf4j
+
 public class JwtFilter extends OncePerRequestFilter {
+
+	private static final Logger LOG = LoggerFactory.getLogger(JwtFilter.class);
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
 		try {
 			String auth = request.getHeader("Authorization");
-			log.info("Authorization Header : {}", auth);
+			LOG.info("Authorization Header : {}", auth);
 			if (auth != null && auth.startsWith("Bearer ")) {
 				String token = auth.substring(7);
 				token = token.replace("\"", "");
 				Integer userId = JwtUtil.getUserId(token);
-				log.info("User Id From JWT : {}", userId);
+				LOG.info("User Id From JWT : {}", userId);
 				SecurityUtil.setUserId(userId);
 			}
 			filterChain.doFilter(request, response);

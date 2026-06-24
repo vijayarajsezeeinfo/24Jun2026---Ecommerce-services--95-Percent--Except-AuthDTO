@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import com.ezeeinfo.dao.AddressDAO;
 import com.ezeeinfo.dao.UserDAO;
 import com.ezeeinfo.dto.AddressDTO;
+import com.ezeeinfo.dto.UserDTO;
+import com.ezeeinfo.exception.ServiceException;
 import com.ezeeinfo.service.AddressService;
 import com.ezeeinfo.util.SecurityUtil;
 
@@ -39,11 +41,19 @@ public class AddressServiceImpl implements AddressService {
 
 	@Override
 	public AddressDTO update(AddressDTO addressDTO) {
-		// TODO Auto-generated method stub
-		LOG.info("entered AddressServiceImpl.update");
-		LOG.info("Updated by : {}", addressDTO);
-		// log.info("{}",addressDAO.update(addressDTO));
-		addressDTO.setUpdatedBy(userDAO.getUser(SecurityUtil.getUserId()));
+		LOG.info("Input Address : {}", addressDTO);
+		UserDTO loggedInUser = userDAO.getUser(SecurityUtil.getUserId());
+		addressDTO.setUpdatedBy(loggedInUser);
+		UserDTO addressOwningUser = userDAO.getUserByCode(addressDTO.getUser().getCode());
+
+		if (!loggedInUser.getNamespace().getCode().equalsIgnoreCase(addressDTO.getNamespace().getCode())) {
+			throw new ServiceException("EXCEPTION 403: ONLY SAME NAMESPACE USER CAN SAVE/MODIFY THE USER ADDRESS");
+		}
+
+		if (!loggedInUser.getCode().equalsIgnoreCase(addressOwningUser.getCode()) || loggedInUser.getRole().getId() != 1) {
+			throw new ServiceException("EXCEPTION 403: ONLY USER OR ADMIN CAN SAVE/MODIFY THE USER ADDRESS");
+		}
+
 		return addressDAO.update(addressDTO);
 	}
 

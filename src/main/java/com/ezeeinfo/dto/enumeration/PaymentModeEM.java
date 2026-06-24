@@ -27,20 +27,22 @@ public enum PaymentModeEM {
 	}
 
 	public static PaymentModeEM getPaymentModeEM(int id) {
+		PaymentModeEM paymentModeEM = null;
 		for (PaymentModeEM paymentMode : values()) {
 			if (paymentMode.getId() == id) {
-				return paymentMode;
+				paymentModeEM = paymentMode;
 			}
 		}
-		return null;
+		return paymentModeEM;
 	}
 
 	public static PaymentModeEM getPaymentModeEM(String code) {
+		PaymentModeEM paymentModeEM = null;
 		for (PaymentModeEM paymentMode : values()) {
 			if (paymentMode.getCode().equalsIgnoreCase(code)) {
-				return paymentMode;
+				paymentModeEM = paymentMode;
 			}
 		}
-		return null;
+		return paymentModeEM;
 	}
 }

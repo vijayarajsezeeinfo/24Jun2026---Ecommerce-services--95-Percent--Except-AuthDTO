@@ -27,20 +27,24 @@ public enum OrderStatusEM {
 	}
 
 	public static OrderStatusEM getOrderStatusEM(int id) {
+
+		OrderStatusEM orderStatusEM = null;
 		for (OrderStatusEM orderStatus : values()) {
 			if (orderStatus.getId() == id) {
-				return orderStatus;
+				orderStatusEM = orderStatus;
 			}
 		}
-		return null;
+		return orderStatusEM;
 	}
 
 	public static OrderStatusEM getOrderStatusEM(String code) {
+
+		OrderStatusEM orderStatusEM = null;
 		for (OrderStatusEM orderStatus : values()) {
 			if (orderStatus.getCode().equalsIgnoreCase(code)) {
-				return orderStatus;
+				orderStatusEM = orderStatus;
 			}
 		}
-		return null;
+		return orderStatusEM;
 	}
 }

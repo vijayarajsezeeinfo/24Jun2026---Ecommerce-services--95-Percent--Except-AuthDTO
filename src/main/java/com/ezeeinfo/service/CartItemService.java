@@ -8,7 +8,7 @@ public interface CartItemService {
 
 	List<CartItemDTO> getAllCartItems(String namespaceCode);
 
-//	CartItemDTO getCartItemByCode(String code) ;
+	CartItemDTO getCartItemByCode(String code) ;
 
 	CartItemDTO update(CartItemDTO cartItemDTO);
 

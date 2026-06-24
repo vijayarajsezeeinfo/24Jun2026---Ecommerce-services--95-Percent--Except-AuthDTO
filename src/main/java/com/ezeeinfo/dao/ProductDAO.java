@@ -137,4 +137,41 @@ public class ProductDAO {
 		}
 		return productDTO;
 	}
+
+	public List<ProductDTO> getProductsByNamePriceAndNamespace(String name, Double price, String namespaceCode) throws ServiceException {
+
+		LOG.info("Getting products by NAME, PRICE and NAMESPACE");
+		List<ProductDTO> productDTOs = new ArrayList<ProductDTO>();
+		String sql = "SELECT p.id AS product_id, p.code AS product_code, p.name AS product_name, p.description AS product_description, p.price AS product_price, p.active_flag AS product_active_flag, p.updated_by AS product_updated_by, b.code AS brand_code, c.code AS category_code, n.code AS namespace_code FROM products p INNER JOIN brands b ON p.brand_id = b.id INNER JOIN categories c ON p.category_id = c.id INNER JOIN namespace n ON p.namespace_id = n.id WHERE p.active_flag < 2 AND p.name LIKE ? AND p.price <= ? AND n.code = ? ORDER BY p.price";
+		try (Connection connection = DBConfig.getInstance().getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+			preparedStatement.setString(1, "%" + name + "%");
+			preparedStatement.setDouble(2, price);
+			preparedStatement.setString(3, namespaceCode);
+			try (ResultSet rs = preparedStatement.executeQuery()) {
+				while (rs.next()) {
+					ProductDTO productDTO = new ProductDTO();
+
+					UserDTO updatedBy = userDAO.getUser(rs.getInt("product_updated_by"));
+					productDTO.setId(rs.getInt("product_id"));
+					productDTO.setCode(rs.getString("product_code"));
+					productDTO.setName(rs.getString("product_name"));
+					productDTO.setDescription(rs.getString("product_description"));
+					productDTO.setPrice(rs.getDouble("product_price"));
+					productDTO.setActiveFlag(rs.getInt("product_active_flag"));
+					productDTO.setUpdatedBy(updatedBy);
+
+					productDTO.setBrand(brandDAO.getBrandByCode(rs.getString("brand_code")));
+					productDTO.setCategory(categoryDAO.getCategoryByCode(rs.getString("category_code")));
+					productDTO.setNamespace(namespaceDAO.getNamespaceByCode(rs.getString("namespace_code")));
+
+					productDTOs.add(productDTO);
+				}
+			}
+
+		}
+		catch (SQLException e) {
+			LOG.info("SQLException while Getting products by NAME, PRICE and NAMESPACE. {}", e);
+		}
+		return productDTOs;
+	}
 }

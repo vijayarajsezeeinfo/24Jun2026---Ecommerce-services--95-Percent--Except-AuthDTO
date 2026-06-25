@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ezeeinfo.controller.io.LoginRequestIO;
 import com.ezeeinfo.controller.io.LoginResponseIO;
 import com.ezeeinfo.dao.UserDAO;
-import com.ezeeinfo.dto.AuthDTO;
 import com.ezeeinfo.dto.UserDTO;
 import com.ezeeinfo.util.JwtUtil;
 
@@ -22,10 +21,13 @@ public class LoginController {
 	@RequestMapping(method = RequestMethod.POST)
 	public LoginResponseIO login(@RequestBody LoginRequestIO request) {
 		UserDTO userDTO = userDAO.login(request.getUsername(), request.getPassword(), request.getNamespaceCode());
-		String token = JwtUtil.generateToken(userDTO.getId(), userDTO.getCode(), userDTO.getUsername(), userDTO.getRole().getName());
+		// String token = JwtUtil.generateToken(userDTO.getId(),
+		// userDTO.getCode(), userDTO.getUsername(),
+		// userDTO.getRole().getName());
+		String token = JwtUtil.generateToken(userDTO);
 
-		AuthDTO authDTO = new AuthDTO();
-		authDTO.setUser(userDTO);
+		// AuthDTO authDTO = new AuthDTO();
+		// authDTO.setUser(userDTO);
 
 		LoginResponseIO loginResponseIO = new LoginResponseIO();
 		loginResponseIO.setToken(token);

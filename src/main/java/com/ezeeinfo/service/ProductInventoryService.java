@@ -2,6 +2,8 @@ package com.ezeeinfo.service;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.ezeeinfo.dto.ProductInventoryDTO;
 
 public interface ProductInventoryService {
@@ -10,6 +12,6 @@ public interface ProductInventoryService {
 
 	ProductInventoryDTO getProductInventoryByCode(String code);
 
-	ProductInventoryDTO update(ProductInventoryDTO productInventoryDTO);
+	ProductInventoryDTO update(ProductInventoryDTO productInventoryDTO, HttpServletRequest request);
 
 }

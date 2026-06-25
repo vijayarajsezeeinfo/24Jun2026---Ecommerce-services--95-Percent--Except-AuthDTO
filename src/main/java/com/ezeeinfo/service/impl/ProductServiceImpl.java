@@ -2,6 +2,8 @@ package com.ezeeinfo.service.impl;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,11 +11,11 @@ import org.springframework.stereotype.Service;
 
 import com.ezeeinfo.dao.ProductDAO;
 import com.ezeeinfo.dao.UserDAO;
+import com.ezeeinfo.dto.AuthDTO;
 import com.ezeeinfo.dto.ProductDTO;
 import com.ezeeinfo.dto.UserDTO;
 import com.ezeeinfo.exception.ServiceException;
 import com.ezeeinfo.service.ProductService;
-import com.ezeeinfo.util.SecurityUtil;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -37,9 +39,10 @@ public class ProductServiceImpl implements ProductService {
 	}
 
 	@Override
-	public ProductDTO update(ProductDTO productDTO) {
+	public ProductDTO update(ProductDTO productDTO, HttpServletRequest request) {
 
-		UserDTO loggedInUser = userDAO.getUser(SecurityUtil.getUserId());
+		AuthDTO authDTO = (AuthDTO) request.getAttribute("auth");
+		UserDTO loggedInUser = userDAO.getUser(authDTO.getUser().getId());
 		productDTO.setUpdatedBy(loggedInUser);
 		LOG.info("product dto: {}", productDTO);
 

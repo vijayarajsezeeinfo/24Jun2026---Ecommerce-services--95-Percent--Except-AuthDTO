@@ -2,16 +2,18 @@ package com.ezeeinfo.service.impl;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ezeeinfo.dao.BrandDAO;
 import com.ezeeinfo.dao.UserDAO;
+import com.ezeeinfo.dto.AuthDTO;
 import com.ezeeinfo.dto.BrandDTO;
 import com.ezeeinfo.dto.UserDTO;
 import com.ezeeinfo.exception.ServiceException;
 import com.ezeeinfo.service.BrandService;
-import com.ezeeinfo.util.SecurityUtil;
 
 @Service
 public class BrandServiceImpl implements BrandService {
@@ -33,8 +35,10 @@ public class BrandServiceImpl implements BrandService {
 	}
 
 	@Override
-	public BrandDTO update(BrandDTO brandDTO) {
-		UserDTO loggedInUser = userDAO.getUser(SecurityUtil.getUserId());
+	public BrandDTO update(BrandDTO brandDTO, HttpServletRequest request) {
+		AuthDTO authDTO = (AuthDTO) request.getAttribute("auth");
+		UserDTO loggedInUser = userDAO.getUser(authDTO.getUser().getId());
+
 		brandDTO.setUpdatedBy(loggedInUser);
 
 		if (!loggedInUser.getNamespace().getCode().equalsIgnoreCase(brandDTO.getNamespace().getCode())) {

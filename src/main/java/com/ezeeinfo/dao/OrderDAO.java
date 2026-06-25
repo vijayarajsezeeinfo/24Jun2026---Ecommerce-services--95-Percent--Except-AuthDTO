@@ -50,11 +50,11 @@ public class OrderDAO {
 	private static final Logger LOG = LoggerFactory.getLogger(OrderDAO.class);
 
 	// when we insert in order table, same time it will reflect in order_items
-	// and payments table
+	// and payments table.
 	// we can only update the order_status in orders table after that.
 
 	public OrderRequestDTO update(OrderRequestDTO orderRequestDTO) {
-		LOG.info("OrderRequest DTO : {}", orderRequestDTO);
+		LOG.info("Input OrderRequest DTO : {}", orderRequestDTO);
 		String namespaceCode = userDAO.getUserByCode(orderRequestDTO.getOrder().getUser().getCode()).getNamespace().getCode();
 		NamespaceDTO namespaceDTO = namespaceDAO.getNamespaceByCode(namespaceCode);
 
@@ -63,23 +63,27 @@ public class OrderDAO {
 			List<ProductDTO> availableProducts = productDAO.getAllProducts(namespaceCode);
 			boolean isExists = availableProducts.stream().anyMatch(product -> product.getCode().equals(item.getProduct().getCode()));
 			if (!isExists) {
-				throw new ServiceException("Product Not Found");
+				LOG.info("EXCEPTION 404: Product Not Found");
+				throw new ServiceException("EXCEPTION 404: Product Not Found");
 			}
 
 			ProductDTO productDTO = productDAO.getProductByCode(item.getProduct().getCode());
 
 			if (productDTO == null) {
-				throw new ServiceException("Product Not Found");
+				LOG.info("EXCEPTION 404: Product Not Found");
+				throw new ServiceException("EXCEPTION 404: Product Not Found");
 			}
 
 			Integer currentQty = productInventoryDAO.getAvailableQuantityByProductId(productDTO.getId());
 
 			if (currentQty == null) {
-				throw new ServiceException("Inventory not found for Product : " + productDTO.getCode());
+				LOG.info("EXCEPTION 404: Inventory not found for Product : {}", productDTO.getCode());
+				throw new ServiceException("EXCEPTION 404: Inventory not found for Product : " + productDTO.getCode());
 			}
 
 			if (currentQty < item.getQuantity()) {
-				throw new ServiceException("Less Stock. Available : " + currentQty);
+				LOG.info("EXCEPTION 400: {} Less Stock. Available : {}", item.getCode(), currentQty);
+				throw new ServiceException("EXCEPTION 400: " + item.getCode() + " Less Stock. Available : " + currentQty);
 			}
 		}
 
@@ -89,18 +93,20 @@ public class OrderDAO {
 			double price = productDAO.getProductByCode(item.getProduct().getCode()).getPrice();
 			actualAmount += price * item.getQuantity();
 		}
-
+		LOG.info("Total Amount to pay for Order: {}", actualAmount);
 		orderRequestDTO.getOrder().setTotalAmount(actualAmount);
 		orderRequestDTO.getPayment().setTotalAmountToPay(actualAmount);
 
 		// paying amount check=========================================
 		if (actualAmount > orderRequestDTO.getPayment().getPaidAmount()) {
-			throw new ServiceException("Insufficient Amount. Your Order worths " + actualAmount);
+			LOG.info("EXCEPTION 400: Insufficient Amount. Your Order worths {}", actualAmount);
+			throw new ServiceException("EXCEPTION 400: Insufficient Amount. Your Order worths " + actualAmount);
 		}
 
-		// balance
+		// balance setting after payment========================
 		if (actualAmount < orderRequestDTO.getPayment().getPaidAmount()) {
 			orderRequestDTO.getPayment().setBalanceAmount(orderRequestDTO.getPayment().getPaidAmount() - actualAmount);
+			LOG.info("Balance Amount : {}", orderRequestDTO.getPayment().getBalanceAmount());
 		}
 
 		// insert in orders table====================================
@@ -129,19 +135,24 @@ public class OrderDAO {
 
 		String sql2 = "SELECT id, code, user_id, order_status, total_amount, order_date, namespace_id, active_flag, updated_by FROM orders WHERE code = ?";
 
+		// If orderCode is not returned, we throw an exception. else we proceed
 		if (orderCode == null) {
-			throw new ServiceException("Order code is not generated.");
+			LOG.info("EXCEPTION 400: Order code is not generated for Order {}", orderRequestDTO.getOrder());
+			throw new ServiceException("EXCEPTION 400: Order code is not generated.");
 		}
 
 		OrderDTO orderDTO = null;
 
+		// We hit db to get orderDTO after order is inserted.
+		// later we use that order id in payments and Order items.
 		try (Connection connection = DBConfig.getInstance().getConnection(); PreparedStatement statement = connection.prepareStatement(sql2);) {
 
 			statement.setString(1, orderCode);
 
 			try (ResultSet rs = statement.executeQuery();) {
 				if (!rs.next()) {
-					throw new ServiceException("EXCEPTION 404: Order is not Found");
+					LOG.info("EXCEPTION 404: Order is not found in DB for OrderCode : {}", orderCode);
+					throw new ServiceException("EXCEPTION 404: Order is not found");
 				}
 
 				UserDTO userDTO = userDAO.getUser(rs.getInt("user_id"));
@@ -168,17 +179,37 @@ public class OrderDAO {
 			LOG.info("SQLException while getting order. {}", e);
 		}
 
+		// Setting orderDTO in paymentDTO
 		orderRequestDTO.getPayment().setOrder(orderDTO);
 		PaymentDTO paymentDTO = orderRequestDTO.getPayment();
 		paymentDTO.setNamespace(namespaceDTO);
 		paymentDTO.setActiveFlag(orderRequestDTO.getOrder().getActiveFlag());
 		LOG.info("orderDTO.getCode() : ", orderDTO.getCode());
 
+		// Order is is available. So that we can insert payment
+
 		// ONCE ORDERED, we cannot modify/delete PAYMENTS AND ORDER ITEMS TABLE.
 		// ONLY INSERT ALLOWED IN PAYMENTS AND ORDER ITEMS TABLE
 
-		if (orderDTO.getActiveFlag() == 1 && orderDTO.getCode() != null) {
+		String checkSql = "SELECT COUNT(*) FROM payments WHERE order_id = ?";
+		boolean isPaymentExist = false;
+		try (Connection connection11 = DBConfig.getInstance().getConnection(); PreparedStatement ps11 = connection11.prepareStatement(checkSql)) {
+			ps11.setInt(1, orderDTO.getId());
+			try (ResultSet rs11 = ps11.executeQuery()) {
+				rs11.next();
+				if (rs11.getInt(1) > 0) {
+					isPaymentExist = true;
+				}
+			}
+			catch (SQLException e) {
+				LOG.info("SQLException while checking if payment already exists");
+			}
+		}
+		catch (SQLException e) {
+			LOG.info("SQLException while checking if payment already exists");
+		}
 
+		if (!isPaymentExist) {
 			// insert in payments table
 			String sql3 = "{CALL EZEE_SP_PAYMENT_IUD( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )}";
 			try (Connection connection = DBConfig.getInstance().getConnection(); CallableStatement statement = connection.prepareCall(sql3);) {
@@ -211,19 +242,12 @@ public class OrderDAO {
 			try (Connection connection = DBConfig.getInstance().getConnection(); CallableStatement statement = connection.prepareCall(sql4);) {
 
 				for (OrderItemDTO item : orderRequestDTO.getOrderItems()) {
-
 					item.setOrder(orderDTO);
-
 					ProductDTO productDTO = productDAO.getProductByCode(item.getProduct().getCode());
-
 					item.setProduct(productDTO);
-
 					item.setNamespace(namespaceDTO);
-
 					item.setPrice(productDTO.getPrice());
-
 					item.setActiveFlag(orderDTO.getActiveFlag());
-
 					item.setUpdatedBy(orderDTO.getUpdatedBy());
 
 					statement.setString(1, item.getCode());
@@ -241,29 +265,24 @@ public class OrderDAO {
 					statement.execute();
 					LOG.info(" EZEE_SP_ORDER_ITEMS_IUD is executed.");
 
+					// setting order item code after inserting
 					item.setCode(statement.getString(1));
 
 					LOG.info("Product Code from Request : {}", item.getProduct().getCode());
 					LOG.info("Product Id from Request   : {}", item.getProduct().getId());
 
 					Integer currentQty = productInventoryDAO.getAvailableQuantityByProductId(item.getProduct().getId());
-
 					if (currentQty == null) {
-						throw new ServiceException("Inventory not found for product : " + item.getProduct().getCode());
+						throw new ServiceException("EXCEPTION 404: Inventory not found for product : " + item.getProduct().getCode());
 					}
-
 					int remainingQty = currentQty - item.getQuantity();
-
-					String sql5 = "UPDATE product_inventory " + "SET available_quantity = ? " + "WHERE product_id = ?";
-
+					String sql5 = "UPDATE product_inventory SET available_quantity = ? WHERE product_id = ?";
 					try (Connection connection2 = DBConfig.getInstance().getConnection(); PreparedStatement statement2 = connection2.prepareStatement(sql5)) {
-
 						statement2.setInt(1, remainingQty);
 						statement2.setInt(2, item.getProduct().getId());
-
 						statement2.executeUpdate();
 					}
-
+					LOG.info("Product Inventory Updated after order");
 				}
 
 			}
@@ -272,9 +291,9 @@ public class OrderDAO {
 			}
 
 		}
-
 		orderRequestDTO.setOrder(orderDTO);
 		orderRequestDTO.setPayment(paymentDTO);
+		LOG.info("Order {} is updated", orderRequestDTO);
 		return orderRequestDTO;
 	}
 
@@ -295,7 +314,7 @@ public class OrderDAO {
 				orderRequestDTO.setOrderItems(items);
 
 				while (rs.next()) {
-					UserDTO updatedBy=userDAO.getUser(rs.getInt("namespace_updated_by"));
+					UserDTO updatedBy = userDAO.getUser(rs.getInt("namespace_updated_by"));
 					namespaceDTO = new NamespaceDTO();
 					namespaceDTO.setId(rs.getInt("namespace_id"));
 					namespaceDTO.setCode(rs.getString("namespace_code"));
@@ -303,7 +322,7 @@ public class OrderDAO {
 					namespaceDTO.setActiveFlag(rs.getInt("namespace_active_flag"));
 					namespaceDTO.setUpdatedBy(updatedBy);
 
-					UserDTO updatedBy2= userDAO.getUser(rs.getInt("user_updated_by"));
+					UserDTO updatedBy2 = userDAO.getUser(rs.getInt("user_updated_by"));
 					userDTO = new UserDTO();
 					userDTO.setId(rs.getInt("user_id"));
 					userDTO.setCode(rs.getString("user_code"));
@@ -316,7 +335,7 @@ public class OrderDAO {
 					userDTO.setActiveFlag(rs.getInt("user_active_flag"));
 					userDTO.setUpdatedBy(updatedBy2);
 
-					UserDTO updatedBy3=userDAO.getUser(rs.getInt("order_updated_by"));
+					UserDTO updatedBy3 = userDAO.getUser(rs.getInt("order_updated_by"));
 					orderDTO = new OrderDTO();
 					orderDTO.setId(rs.getInt("order_id"));
 					orderDTO.setCode(rs.getString("order_code"));
@@ -344,7 +363,7 @@ public class OrderDAO {
 					paymentDTO.setActiveFlag(rs.getInt("payment_active_flag"));
 					paymentDTO.setUpdatedBy(updatedBy4);
 
-					UserDTO updatedBy5= userDAO.getUser(rs.getInt("brand_updated_by"));
+					UserDTO updatedBy5 = userDAO.getUser(rs.getInt("brand_updated_by"));
 					BrandDTO brandDTO = new BrandDTO();
 					brandDTO.setId(rs.getInt("brand_id"));
 					brandDTO.setCode(rs.getString("brand_code"));
@@ -361,9 +380,8 @@ public class OrderDAO {
 					categoryDTO.setNamespace(namespaceDTO);
 					categoryDTO.setActiveFlag(rs.getInt("category_active_flag"));
 					categoryDTO.setUpdatedBy(updatedBy6);
-					
-					
-                    UserDTO updatedBy7=userDAO.getUser(rs.getInt("product_updated_by"));
+
+					UserDTO updatedBy7 = userDAO.getUser(rs.getInt("product_updated_by"));
 					ProductDTO productDTO = new ProductDTO();
 					productDTO.setId(rs.getInt("product_id"));
 					productDTO.setCode(rs.getString("product_code"));
@@ -376,7 +394,7 @@ public class OrderDAO {
 					productDTO.setActiveFlag(rs.getInt("product_active_flag"));
 					productDTO.setUpdatedBy(updatedBy7);
 
-					UserDTO updatedBy8= userDAO.getUser(rs.getInt("order_item_updated_by"));
+					UserDTO updatedBy8 = userDAO.getUser(rs.getInt("order_item_updated_by"));
 					OrderItemDTO orderItemDTO = new OrderItemDTO();
 					orderItemDTO.setId(rs.getInt("order_item_id"));
 					orderItemDTO.setCode(rs.getString("order_item_code"));
@@ -394,7 +412,7 @@ public class OrderDAO {
 				}
 
 				if (orderDTO == null) {
-					LOG.info("Order Not Found for code {}", code);
+					LOG.info("EXCEPTION 404: Order Not Found for code {}", code);
 					throw new ServiceException("EXCEPTION 404: Order Not Found");
 				}
 
@@ -426,9 +444,12 @@ public class OrderDAO {
 					int orderId = rs.getInt("order_id");
 
 					OrderRequestDTO dto = orderMap.get(orderId);
+					// only creating ORDER REQUEST DTO if is not available.
+					// To avoid creating new ORDER REQUEST DTO for each items
+					// (if dto is available for that order id)
 					if (dto == null) {
-						
-						UserDTO nsUpdatedBy=userDAO.getUser(rs.getInt("namespace_updated_by"));
+
+						UserDTO nsUpdatedBy = userDAO.getUser(rs.getInt("namespace_updated_by"));
 						NamespaceDTO namespaceDTO = new NamespaceDTO();
 						namespaceDTO.setId(rs.getInt("namespace_id"));
 						namespaceDTO.setCode(rs.getString("namespace_code"));
@@ -436,7 +457,7 @@ public class OrderDAO {
 						namespaceDTO.setActiveFlag(rs.getInt("namespace_active_flag"));
 						namespaceDTO.setUpdatedBy(nsUpdatedBy);
 
-						UserDTO usrUpdatedBy=userDAO.getUser(rs.getInt("user_updated_by"));
+						UserDTO usrUpdatedBy = userDAO.getUser(rs.getInt("user_updated_by"));
 						UserDTO userDTO = new UserDTO();
 						userDTO.setId(rs.getInt("user_id"));
 						userDTO.setCode(rs.getString("user_code"));
@@ -460,7 +481,7 @@ public class OrderDAO {
 						orderDTO.setActiveFlag(rs.getInt("order_active_flag"));
 						orderDTO.setUpdatedBy(odrUpdatedBy);
 
-						UserDTO pmtUpdatedBy=userDAO.getUser(rs.getInt("payment_updated_by"));
+						UserDTO pmtUpdatedBy = userDAO.getUser(rs.getInt("payment_updated_by"));
 						PaymentDTO paymentDTO = new PaymentDTO();
 						paymentDTO.setId(rs.getInt("payment_id"));
 						paymentDTO.setCode(rs.getString("payment_code"));
@@ -483,9 +504,9 @@ public class OrderDAO {
 						orderMap.put(orderId, dto);
 					}
 
-					// Only adding item if it exists
+					// Only adding item if it exists in table
 					if (rs.getObject("order_item_id") != null) {
-						
+
 						UserDTO brdUpdatedBy = userDAO.getUser(rs.getInt("brand_updated_by"));
 						BrandDTO brandDTO = new BrandDTO();
 						brandDTO.setId(rs.getInt("brand_id"));
@@ -495,7 +516,7 @@ public class OrderDAO {
 						brandDTO.setActiveFlag(rs.getInt("brand_active_flag"));
 						brandDTO.setUpdatedBy(brdUpdatedBy);
 
-						UserDTO ctgUpdatedBy=userDAO.getUser(rs.getInt("category_updated_by"));
+						UserDTO ctgUpdatedBy = userDAO.getUser(rs.getInt("category_updated_by"));
 						CategoryDTO categoryDTO = new CategoryDTO();
 						categoryDTO.setId(rs.getInt("category_id"));
 						categoryDTO.setCode(rs.getString("category_code"));
@@ -517,7 +538,7 @@ public class OrderDAO {
 						productDTO.setActiveFlag(rs.getInt("product_active_flag"));
 						productDTO.setUpdatedBy(pdtUpdatedBy);
 
-						UserDTO  otmUpdatedBy= userDAO.getUser(rs.getInt("order_item_updated_by"));
+						UserDTO otmUpdatedBy = userDAO.getUser(rs.getInt("order_item_updated_by"));
 						OrderItemDTO orderItemDTO = new OrderItemDTO();
 						orderItemDTO.setId(rs.getInt("order_item_id"));
 						orderItemDTO.setCode(rs.getString("order_item_code"));

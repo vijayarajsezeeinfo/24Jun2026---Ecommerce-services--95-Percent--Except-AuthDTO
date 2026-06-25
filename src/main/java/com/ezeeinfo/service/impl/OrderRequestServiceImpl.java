@@ -2,6 +2,8 @@ package com.ezeeinfo.service.impl;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,12 +11,12 @@ import org.springframework.stereotype.Service;
 
 import com.ezeeinfo.dao.OrderDAO;
 import com.ezeeinfo.dao.UserDAO;
+import com.ezeeinfo.dto.AuthDTO;
 import com.ezeeinfo.dto.OrderItemDTO;
 import com.ezeeinfo.dto.OrderRequestDTO;
 import com.ezeeinfo.dto.UserDTO;
 import com.ezeeinfo.exception.ServiceException;
 import com.ezeeinfo.service.OrderRequestService;
-import com.ezeeinfo.util.SecurityUtil;
 
 @Service
 
@@ -33,9 +35,10 @@ public class OrderRequestServiceImpl implements OrderRequestService {
 	}
 
 	@Override
-	public OrderRequestDTO update(OrderRequestDTO orderRequestDTO) {
+	public OrderRequestDTO update(OrderRequestDTO orderRequestDTO, HttpServletRequest request) {
 		LOG.info("OrderRequest DTO : {}", orderRequestDTO);
-		UserDTO loggedInUser = userDAO.getUser(SecurityUtil.getUserId());
+		AuthDTO authDTO = (AuthDTO) request.getAttribute("auth");
+		UserDTO loggedInUser = userDAO.getUser(authDTO.getUser().getId());
 
 		// SETTING UPDATED BY FOR ORDERS
 		orderRequestDTO.getOrder().setUpdatedBy(loggedInUser);

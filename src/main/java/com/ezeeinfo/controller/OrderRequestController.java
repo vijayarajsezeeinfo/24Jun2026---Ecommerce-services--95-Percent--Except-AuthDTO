@@ -2,6 +2,8 @@ package com.ezeeinfo.controller;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -48,9 +50,9 @@ public class OrderRequestController {
 	ProductController productController;
 
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
-	public OrderRequestIO update(@RequestBody OrderRequestIO orderRequestIO) {
+	public OrderRequestIO update(@RequestBody OrderRequestIO orderRequestIO, HttpServletRequest request) {
 		log.info("OrderRequestIO : {}", orderRequestIO);
-		OrderRequestDTO dto = orderRequestService.update(orIOToDTO(orderRequestIO));
+		OrderRequestDTO dto = orderRequestService.update(orIOToDTO(orderRequestIO), request);
 		log.info("OrderRequest DTO : {}", dto);
 		return orDTOToIO(dto);
 	}

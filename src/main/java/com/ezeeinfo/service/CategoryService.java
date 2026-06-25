@@ -2,6 +2,8 @@ package com.ezeeinfo.service;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.ezeeinfo.dto.CategoryDTO;
 
 public interface CategoryService {
@@ -10,6 +12,6 @@ public interface CategoryService {
 
 	CategoryDTO getCategoryByCode(String code);
 
-	CategoryDTO update(CategoryDTO categoryDTO);
+	CategoryDTO update(CategoryDTO categoryDTO, HttpServletRequest request);
 
 }

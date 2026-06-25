@@ -2,6 +2,8 @@ package com.ezeeinfo.service;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.ezeeinfo.dto.BrandDTO;
 
 public interface BrandService {
@@ -10,5 +12,5 @@ public interface BrandService {
 
 	BrandDTO getBrandByCode(String code);
 
-	BrandDTO update(BrandDTO brandDTO);
+	BrandDTO update(BrandDTO brandDTO, HttpServletRequest request);
 }

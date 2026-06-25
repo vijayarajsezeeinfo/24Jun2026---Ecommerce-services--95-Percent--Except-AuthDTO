@@ -2,6 +2,8 @@ package com.ezeeinfo.controller;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,9 +51,9 @@ public class ProductController {
 	}
 
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
-	public ProductIO update(@RequestBody ProductIO productIO) {
+	public ProductIO update(@RequestBody ProductIO productIO, HttpServletRequest request) {
 		LOG.info("Input Product for Save or Update : {}", productIO);
-		return productDTOToIO(productService.update(productIOToDTO(productIO)));
+		return productDTOToIO(productService.update(productIOToDTO(productIO), request));
 	}
 
 	@GetMapping("/filter")

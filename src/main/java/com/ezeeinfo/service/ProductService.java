@@ -2,6 +2,8 @@ package com.ezeeinfo.service;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.ezeeinfo.dto.ProductDTO;
 
 public interface ProductService {
@@ -10,7 +12,7 @@ public interface ProductService {
 
 	ProductDTO getProductByCode(String code);
 
-	ProductDTO update(ProductDTO productDTO);
+	ProductDTO update(ProductDTO productDTO,  HttpServletRequest request);
 
 	List<ProductDTO> getProductsByNamePriceAndNamespace(String name, Double price, String namespaceCode);
 }

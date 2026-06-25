@@ -2,6 +2,8 @@ package com.ezeeinfo.controller;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,8 +25,6 @@ public class CategoryController {
 	CategoryService categoryService;
 	@Autowired
 	NamespaceController namespaceController;
-	
-
 
 	@RequestMapping(value = "/{namespaceCode}", method = RequestMethod.GET)
 	public List<CategoryIO> getAllCategories(@PathVariable("namespaceCode") String namespaceCode) {
@@ -36,9 +36,9 @@ public class CategoryController {
 		return categoryDTOToIO(categoryService.getCategoryByCode(code));
 	}
 
-	@RequestMapping(value="/update" ,method = RequestMethod.POST)
-	public CategoryIO update(@RequestBody CategoryIO categoryIO) {
-		return categoryDTOToIO(categoryService.update(categoryIOToDTO(categoryIO)));
+	@RequestMapping(value = "/update", method = RequestMethod.POST)
+	public CategoryIO update(@RequestBody CategoryIO categoryIO, HttpServletRequest request) {
+		return categoryDTOToIO(categoryService.update(categoryIOToDTO(categoryIO), request));
 	}
 
 	public CategoryIO categoryDTOToIO(CategoryDTO categoryDTO) {

@@ -2,6 +2,8 @@ package com.ezeeinfo.service;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.ezeeinfo.dto.OrderRequestDTO;
 
 public interface OrderRequestService {
@@ -10,5 +12,5 @@ public interface OrderRequestService {
 
 	OrderRequestDTO getOrderByCode(String code);
 
-	OrderRequestDTO update(OrderRequestDTO orderRequestDTO);
+	OrderRequestDTO update(OrderRequestDTO orderRequestDTO, HttpServletRequest request);
 }

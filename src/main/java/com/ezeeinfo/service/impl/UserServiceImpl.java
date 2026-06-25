@@ -2,6 +2,8 @@ package com.ezeeinfo.service.impl;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.ehcache.Cache;
 import org.ehcache.CacheManager;
 import org.slf4j.Logger;
@@ -10,11 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ezeeinfo.dao.UserDAO;
+import com.ezeeinfo.dto.AuthDTO;
 import com.ezeeinfo.dto.UserDTO;
 import com.ezeeinfo.exception.ServiceException;
 import com.ezeeinfo.service.UserService;
 import com.ezeeinfo.util.PasswordUtil;
-import com.ezeeinfo.util.SecurityUtil;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -67,13 +69,14 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public UserDTO update(UserDTO userDTO) {
+	public UserDTO update(UserDTO userDTO, HttpServletRequest request) {
 
 		// HASHING PASSWORD
 		userDTO.setPassword(PasswordUtil.hashPassword(userDTO.getPassword()));
 
 		// SETTING LOGGED IN USER
-		UserDTO loggedInUser = userDAO.getUser(SecurityUtil.getUserId());
+		AuthDTO authDTO = (AuthDTO) request.getAttribute("auth");
+		UserDTO loggedInUser = userDAO.getUser(authDTO.getUser().getId());
 		userDTO.setUpdatedBy(loggedInUser);
 
 		LOG.info("Input USER in USER SERVICE IMPL after Setting updated by : {}", userDTO);

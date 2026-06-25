@@ -2,16 +2,18 @@ package com.ezeeinfo.service.impl;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ezeeinfo.dao.ProductInventoryDAO;
 import com.ezeeinfo.dao.UserDAO;
+import com.ezeeinfo.dto.AuthDTO;
 import com.ezeeinfo.dto.ProductInventoryDTO;
 import com.ezeeinfo.dto.UserDTO;
 import com.ezeeinfo.exception.ServiceException;
 import com.ezeeinfo.service.ProductInventoryService;
-import com.ezeeinfo.util.SecurityUtil;
 
 @Service
 public class ProductInventoryServiceImpl implements ProductInventoryService {
@@ -33,9 +35,10 @@ public class ProductInventoryServiceImpl implements ProductInventoryService {
 	}
 
 	@Override
-	public ProductInventoryDTO update(ProductInventoryDTO productInventoryDTO) {
+	public ProductInventoryDTO update(ProductInventoryDTO productInventoryDTO, HttpServletRequest request) {
 
-		UserDTO loggedInUser = userDAO.getUser(SecurityUtil.getUserId());
+		AuthDTO authDTO = (AuthDTO) request.getAttribute("auth");
+		UserDTO loggedInUser = userDAO.getUser(authDTO.getUser().getId());
 		productInventoryDTO.setUpdatedBy(loggedInUser);
 
 		if (!productInventoryDTO.getNamespace().getCode().equals(loggedInUser.getNamespace().getCode())) {

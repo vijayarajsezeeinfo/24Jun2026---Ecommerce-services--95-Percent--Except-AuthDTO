@@ -2,6 +2,8 @@ package com.ezeeinfo.service.impl;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,10 +12,10 @@ import org.springframework.stereotype.Service;
 import com.ezeeinfo.dao.AddressDAO;
 import com.ezeeinfo.dao.UserDAO;
 import com.ezeeinfo.dto.AddressDTO;
+import com.ezeeinfo.dto.AuthDTO;
 import com.ezeeinfo.dto.UserDTO;
 import com.ezeeinfo.exception.ServiceException;
 import com.ezeeinfo.service.AddressService;
-import com.ezeeinfo.util.SecurityUtil;
 
 @Service
 
@@ -40,9 +42,10 @@ public class AddressServiceImpl implements AddressService {
 	}
 
 	@Override
-	public AddressDTO update(AddressDTO addressDTO) {
+	public AddressDTO update(AddressDTO addressDTO, HttpServletRequest request) {
 		LOG.info("Input Address : {}", addressDTO);
-		UserDTO loggedInUser = userDAO.getUser(SecurityUtil.getUserId());
+		AuthDTO authDTO = (AuthDTO) request.getAttribute("auth");
+		UserDTO loggedInUser = userDAO.getUser(authDTO.getUser().getId());
 		addressDTO.setUpdatedBy(loggedInUser);
 		UserDTO addressOwningUser = userDAO.getUserByCode(addressDTO.getUser().getCode());
 

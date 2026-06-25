@@ -67,7 +67,7 @@ public class BrandDAO {
 			statement.setString(1, code);
 			try (ResultSet rs = statement.executeQuery();) {
 				if (!rs.next()) {
-					throw new ServiceException("Brand Not Found");
+					throw new ServiceException("EXCEPTION 404: Brand Not Found");
 				}
 				NamespaceDTO namespaceDTO = namespaceDAO.getNamespace(rs.getInt("brand_namespace_id"));
 				UserDTO updatedBy = userDAO.getUser(rs.getInt("brand_updated_by"));

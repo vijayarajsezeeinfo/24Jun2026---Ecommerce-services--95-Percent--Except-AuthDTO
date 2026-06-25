@@ -2,6 +2,8 @@ package com.ezeeinfo.controller;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,9 +45,9 @@ public class UserController {
 	}
 
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
-	public UserIOResponse update(@RequestBody UserIO userIO) {
+	public UserIOResponse update(@RequestBody UserIO userIO, HttpServletRequest request) {
 		LOG.info("Input USER : {}",userIO);
-		UserDTO userDTO = userService.update(userIOToDTO(userIO));
+		UserDTO userDTO = userService.update(userIOToDTO(userIO),request);
 		return userDTOToIO(userDTO);
 	}
 

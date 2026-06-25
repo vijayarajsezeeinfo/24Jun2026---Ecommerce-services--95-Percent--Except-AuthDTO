@@ -2,19 +2,21 @@ package com.ezeeinfo.service.impl;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ezeeinfo.dao.CategoryDAO;
 import com.ezeeinfo.dao.UserDAO;
+import com.ezeeinfo.dto.AuthDTO;
 import com.ezeeinfo.dto.CategoryDTO;
 import com.ezeeinfo.dto.UserDTO;
 import com.ezeeinfo.exception.ServiceException;
 import com.ezeeinfo.service.CategoryService;
-import com.ezeeinfo.util.SecurityUtil;
 
 @Service
-public class CategoryServicezimpl implements CategoryService {
+public class CategoryServiceimpl implements CategoryService {
 
 	@Autowired
 	CategoryDAO categoryDAO;
@@ -34,8 +36,9 @@ public class CategoryServicezimpl implements CategoryService {
 	}
 
 	@Override
-	public CategoryDTO update(CategoryDTO categoryDTO) {
-		UserDTO loggedInUser = userDAO.getUser(SecurityUtil.getUserId());
+	public CategoryDTO update(CategoryDTO categoryDTO, HttpServletRequest request) {
+		AuthDTO authDTO = (AuthDTO) request.getAttribute("auth");
+		UserDTO loggedInUser = userDAO.getUser(authDTO.getUser().getId());
 		categoryDTO.setUpdatedBy(loggedInUser);
 
 		if (!loggedInUser.getNamespace().getCode().equalsIgnoreCase(categoryDTO.getNamespace().getCode())) {

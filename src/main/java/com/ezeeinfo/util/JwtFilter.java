@@ -12,8 +12,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-@Component
+import com.ezeeinfo.dto.AuthDTO;
+import com.ezeeinfo.dto.UserDTO;
 
+@Component
 public class JwtFilter extends OncePerRequestFilter {
 
 	private static final Logger LOG = LoggerFactory.getLogger(JwtFilter.class);
@@ -27,15 +29,20 @@ public class JwtFilter extends OncePerRequestFilter {
 			if (auth != null && auth.startsWith("Bearer ")) {
 				String token = auth.substring(7);
 				token = token.replace("\"", "");
-				Integer userId = JwtUtil.getUserId(token);
-				LOG.info("User Id From JWT : {}", userId);
-				SecurityUtil.setUserId(userId);
+
+				UserDTO userDTO = JwtUtil.getUserDTO(token);
+
+				AuthDTO authDTO = new AuthDTO();
+				authDTO.setUser(userDTO);
+
+				request.setAttribute("auth", authDTO);
 			}
 			filterChain.doFilter(request, response);
 		}
-		finally {
-			SecurityUtil.clear();
+		catch (Exception e) {
+			LOG.info("Exception in JWT FILTER : {}", e);
 		}
+
 	}
 
 }

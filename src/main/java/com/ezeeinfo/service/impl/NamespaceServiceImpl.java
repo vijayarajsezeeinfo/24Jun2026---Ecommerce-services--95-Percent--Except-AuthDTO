@@ -2,6 +2,8 @@ package com.ezeeinfo.service.impl;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,11 +12,11 @@ import org.springframework.stereotype.Service;
 
 import com.ezeeinfo.dao.NamespaceDAO;
 import com.ezeeinfo.dao.UserDAO;
+import com.ezeeinfo.dto.AuthDTO;
 import com.ezeeinfo.dto.NamespaceDTO;
 import com.ezeeinfo.dto.UserDTO;
 import com.ezeeinfo.exception.ServiceException;
 import com.ezeeinfo.service.NamespaceService;
-import com.ezeeinfo.util.SecurityUtil;
 
 @Service
 public class NamespaceServiceImpl implements NamespaceService {
@@ -67,9 +69,10 @@ public class NamespaceServiceImpl implements NamespaceService {
 	}
 
 	@Override
-	public NamespaceDTO update(NamespaceDTO namespaceDTO) {
+	public NamespaceDTO update(NamespaceDTO namespaceDTO, HttpServletRequest request) {
 
-		UserDTO loggedInUser = userDAO.getUser(SecurityUtil.getUserId());
+		AuthDTO authDTO = (AuthDTO) request.getAttribute("auth");
+		UserDTO loggedInUser = userDAO.getUser(authDTO.getUser().getId());
 		namespaceDTO.setUpdatedBy(loggedInUser);
 
 		if (loggedInUser.getRole().getId() != 0) {

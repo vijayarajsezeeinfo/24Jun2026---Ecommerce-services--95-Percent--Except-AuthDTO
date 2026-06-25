@@ -2,6 +2,8 @@ package com.ezeeinfo.controller;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ezeeinfo.controller.io.NamespaceIO;
 import com.ezeeinfo.dto.NamespaceDTO;
 import com.ezeeinfo.service.NamespaceService;
-import com.ezeeinfo.util.SecurityUtil;
 
 @RestController
 @RequestMapping("/namespace")
@@ -32,9 +33,8 @@ public class NamespaceController {
 	}
 
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
-	public NamespaceIO update(@RequestBody NamespaceIO namespaceIO) {
-		System.out.println("Controller User Id : " + SecurityUtil.getUserId());
-		NamespaceDTO namespaceDTO = namespaceService.update(namespaceIOToDTO(namespaceIO));
+	public NamespaceIO update(@RequestBody NamespaceIO namespaceIO, HttpServletRequest request) {
+		NamespaceDTO namespaceDTO = namespaceService.update(namespaceIOToDTO(namespaceIO), request);
 		return namespaceDTOToIO(namespaceDTO);
 	}
 

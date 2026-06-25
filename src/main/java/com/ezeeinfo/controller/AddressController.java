@@ -2,6 +2,8 @@ package com.ezeeinfo.controller;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,9 +52,9 @@ public class AddressController {
 	}
 
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
-	public AddressIO update(@RequestBody AddressIO addressIO) {
+	public AddressIO update(@RequestBody AddressIO addressIO, HttpServletRequest request) {
 		LOG.info("Input Address for Save or Update : {}", addressIO);
-		AddressDTO addressDTO = addressService.update(addressIOToDTO(addressIO));
+		AddressDTO addressDTO = addressService.update(addressIOToDTO(addressIO),request);
 		return addressDTOToIO(addressDTO);
 	}
 
